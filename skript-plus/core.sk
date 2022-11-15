@@ -1,0 +1,119 @@
+options:
+  sk+: &f[&6Skript&e+&f]
+
+import:
+  ch.njol.skript.Skript
+  ch.njol.skript.SkriptAddon
+  ch.njol.skript.lang.Variable
+  com.google.gson.Gson
+  com.google.gson.JsonElement
+  com.google.gson.JsonObject
+  com.google.gson.JsonPrimitive
+  java.io.BufferedReader
+  java.io.File
+  java.io.FileInputStream
+  java.io.FileOutputStream
+  java.lang.Long
+  java.net.URL
+  java.nio.channels.Channels
+  java.nio.channels.FileChannel
+  java.util.Properties
+  java.util.Scanner
+  org.bukkit.Bukkit
+  org.bukkit.plugin.PluginDescriptionFile
+
+# TO DO
+# Finish addon downloader below
+command download_plugin <string>:
+  trigger:
+    broadcast "started!"
+    create section with arguments variables {_link} stored in {_section}:
+      set {_url} to new URL({_link})
+      set {_file} to new File("/home/container/plugins/test.jar")
+
+      # create the path if it doesn't exist for some reason
+      {_file}.getParentFile().mkdirs()
+      {_file}.createNewFile()
+      
+      # download the file
+      set {_readableByteChannel} to Channels.newChannel({_url}.openStream())
+      set {_fileOutputStream} to new FileOutputStream({_file}) 
+      set {_fileChannel} to {_fileOutputStream}.getChannel()
+      {_fileChannel}.transferFrom({_readableByteChannel}, 0, Long.MAX_VALUE)
+
+    run section {_section} async with arguments arg-1 and wait
+    broadcast "done!"
+
+local effect send github request to %string% and store it in %~object%:
+  parse:
+    expr-2 is an instance of Variable
+    continue
+    
+  trigger:
+    delay effect
+    create section with arguments variables {_repo} stored in {_section}:
+      set {_url} to new URL("https://api.github.com/repos/%{_repo}%/releases/latest")
+      set {_con} to {_url}.openConnection()
+      set {_s} to new Scanner({_url}.openStream())
+      set {_data} to {_s}.nextLine()
+      return {_data}
+      
+    run section {_section} async with arguments (expr-1) and store the result in {_response} and wait
+    set raw expr-2 to {_response}
+    continue
+
+local effect get the latest version of %string% and store it in %~object%:
+  parse:
+    expr-2 is an instance of Variable
+    continue
+  trigger:
+    delay effect
+    # load the addon repo list
+    set {_prop} to new Properties() 
+    set {_addon.list} to new File("/home/container/plugins/Skript/scripts/skript-plus/addons.properties")
+    set {_stream} to new FileInputStream({_addon.list})
+    {_prop}.load({_stream})
+  
+    # send a request to the link and return the latest version
+    set {_repo} to {_prop}.getProperty((lowercase expr-1))
+    send github request to {_repo} and store it in {_response}
+
+    # read the response
+    set {_gson} to new Gson()
+    set {_json} to {_gson}.fromJson({_response}, JsonObject.class)
+    set raw expr-2 to {_json}.get("tag_name").getAsString()
+    continue
+
+local effect check the updates for all addons:
+  trigger:
+    delay effect
+    # load the addon link list
+    set {_prop} to new Properties() 
+    set {_addon.list} to new File("/home/container/plugins/Skript/scripts/skript-plus/addons.properties")
+    set {_stream} to new FileInputStream({_addon.list})
+    {_prop}.load({_stream})
+
+    add "" to {_send::*}
+    set {_addons::*} to getSkriptAddons()
+    loop {_addons::*}:
+      # if the plugin is avaliable in the properties file, check for updates
+      set {_addon} to lowercase loop-value
+      if {_prop}.getProperty({_addon}) is set:
+        set {_current} to Bukkit.getPluginManager().getPlugin(loop-value).getDescription().getVersion()
+        get the latest version of loop-value and store it in {_latest}
+        set {_latest} to (join (regex split {_latest} at "[^0-9.]") with "")
+        if {_current} != {_latest}:
+          add " &7[&c⬤&7] &f%loop-value% &7(%{_current}% -> %{_latest}%)" to {_send::*}
+        else:
+          add " &7[&a⬤&7] &f%loop-value% &7(%{_current}%)" to {_send::*}
+      else:
+        add " &7[&6⬤&7] &f%loop-value% &7(%{_current}%)" to {_send::*}
+    set {_count} to (size of {_send::*}) - 1
+    set {_send::1} to "{@sk+} Your Addons [%{_count}%] &a[Up to Date] &c[Outdated] &6[Unknown]"
+    broadcast {_send::*}
+    continue
+
+function getSkriptAddons() :: strings:
+  loop ...Skript.getAddons():
+    add loop-value.getName() to {_addons::*}
+  return {_addons::*}
