@@ -1,0 +1,17 @@
+import:
+  ch.njol.skript.Skript
+  org.bukkit.Bukkit
+  org.bukkit.plugin.PluginDescriptionFile
+
+function getSkriptAddons() :: strings:
+  loop ...Skript.getAddons():
+    add loop-value.getName() to {_addons::*}
+  return {_addons::*}
+
+function getSkriptDependencies() :: strings:
+  set {_pm} to Bukkit.getPluginManager()
+  loop ...{_pm}.getPlugin("Skript").getDescription().getSoftDepend():
+    set {_pl} to loop-value
+    if plugin {_pl} is enabled:
+      add loop-value to {_dependencies::*}
+  return {_dependencies::*}
