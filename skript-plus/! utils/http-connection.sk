@@ -13,12 +13,12 @@ import:
   java.nio.charset.StandardCharsets
   java.util.HashMap
 
-command download_skbee:
+effect skp download file %string% and store it inside %string%:
   trigger:
     broadcast "started!"
     create section with arguments variables {_link} stored in {_section}:
       set {_url} to new URL({_link})
-      set {_file} to new File("/home/container/plugins/skbee_test.jar")
+      set {_file} to new File("./plugins/skbee_test.jar")
 
       # create the path if it doesn't exist for some reason
       {_file}.getParentFile().mkdirs()
@@ -33,7 +33,7 @@ command download_skbee:
     run section {_section} async with arguments "https://github.com/ShaneBeee/SkBee/releases/download/2.5.1/SkBee-2.5.1.jar" and wait
     broadcast "done!"
 
-effect send a %string% request to %string% [with data %-string%] and store it in %~object%:
+effect skp send a %string% request to %string% [with data %-string%] and store it in %~object%:
   parse:
     expr-4 is an instance of Variable
     continue
@@ -73,28 +73,4 @@ effect send a %string% request to %string% [with data %-string%] and store it in
       
     run section {_section} async with arguments (expr-1, expr-2, (expr-3 ? "")) and store the result in {_response} and wait
     set raw expr-4 to {_response}
-    broadcast {_response}
     continue
-
-effect get the latest version of %string% and store it in %~object%:
-  parse:
-    expr-2 is an instance of Variable
-    continue
-  trigger:
-    delay effect
-    # load the addon repo list
-    set {_prop} to getAddonProperties()
-  
-    # send a request to the link and return the latest version
-    set {_repo} to {_prop}.getProperty((lowercase expr-1))
-    send a "GET" request to
-
-    # read the response
-    set {_gson} to new Gson()
-    set {_json} to {_gson}.fromJson({_response}, JsonObject.class)
-    set raw expr-2 to {_json}.get("tag_name").getAsString()
-    continue
-
-function http_test():
-  send a "GET" request to "https://api.github.com/repos/ShaneBeee/SkBee/releases/latest" and store it in {_response}
-  broadcast getLatestVersionFromResponse({_response}, "github")

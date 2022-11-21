@@ -3,12 +3,12 @@ import:
   org.bukkit.Bukkit
   org.bukkit.plugin.PluginDescriptionFile
 
-function getSkriptAddons() :: strings:
+function skp_get_skript_addons() :: strings:
   loop ...Skript.getAddons():
     add loop-value.getName() to {_addons::*}
   return {_addons::*}
 
-function getSkriptDependencies() :: strings:
+function skp_get_skript_dependencies() :: strings:
   set {_pm} to Bukkit.getPluginManager()
   loop ...{_pm}.getPlugin("Skript").getDescription().getSoftDepend():
     set {_pl} to loop-value

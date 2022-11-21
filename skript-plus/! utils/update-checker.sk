@@ -1,0 +1,53 @@
+import:
+  ch.njol.skript.lang.Variable
+  java.util.Properties
+  org.bukkit.Bukkit
+
+effect skp get the latest version of %string% and store it in %~object%:
+  parse:
+    expr-2 is an instance of Variable
+    continue
+  trigger:
+    delay effect
+    # load the addon repo list
+    set {_prop} to skp_get_addon_properties()
+    broadcast {_prop}
+    set {_repo} to {_prop}.getProperty((lowercase expr-1))
+    broadcast {_repo}
+    skp send a "GET" request to "https://api.github.com/repos/%{_repo}%/releases/latest" and store it in {_response}
+
+    # read the response
+    set {_ver} to skp_get_latest_version_from_response({_response}, "github")
+    set raw expr-2 to {_ver}
+    continue
+
+effect skp check the updates for all addons and store it in %~objects%:
+  parse:
+    expr-1 is an instance of Variable
+    continue
+    
+  trigger:
+    delay effect
+    # load the addon link list
+    set {_prop} to skp_get_addon_properties()
+
+    add "" to {_send::*}
+    set {_addons::*} to skp_get_skript_addons()
+    loop {_addons::*}:
+      # if the plugin is avaliable in the properties file, check for updates
+      set {_addon} to lowercase loop-value
+      if {_prop}.getProperty({_addon}) is set:
+        set {_current} to Bukkit.getPluginManager().getPlugin(loop-value).getDescription().getVersion()
+        skp get the latest version of loop-value and store it in {_latest}
+        set {_latest} to (join (regex split {_latest} at "[^0-9.]") with "")
+        if {_current} != {_latest}: # outdated
+          add " &7[&c⬤&7] &f%loop-value% &7(%{_current}% -> %{_latest}%)" to {_send::*}
+        else: # up to date
+          add " &7[&a⬤&7] &f%loop-value% &7(%{_current}%)" to {_send::*}
+      else: # unknown
+        add " &7[&6⬤&7] &f%loop-value% &7(%{_current}%)" to {_send::*}
+    set {_count} to (size of {_send::*}) - 1
+    set {_send::1} to "&fAddons [%{_count}%] &a[Up to Date] &c[Outdated] &6[Unknown]"
+    set raw expr-1 to {_send::*}
+    continue
+    

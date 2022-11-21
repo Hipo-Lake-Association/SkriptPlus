@@ -2,16 +2,16 @@ import:
   com.google.gson.Gson
   com.google.gson.JsonObject
 
-function getLatestVersionFromResponse(response: string, site: string) :: string:
+function skp_get_latest_version_from_response(response: string, site: string) :: string:
   if {_site} = "github": # response.tag_name
     set {_gson} to new Gson()
     set {_json} to {_gson}.fromJson({_response}, JsonObject.class)
     set {_ver} to {_json}.get("tag_name").getAsString()
   
-  set {_ver} to (join (regex split {_ver} at "[^0-9.]") with "") # gets rid of stuff like "v" in version name, we don't want that since plugin version is only a number
+  set {_ver} to (join (regex split {_ver} at "[^0-9.]") with "") # gets rid of stuff like "v" in version name, we don't want that
   return {_ver}
 
-function getLogLinkFromResponse(response: string) :: string:
+function skp_get_log_link_from_response(response: string) :: string:
   # response.url
   set {_gson} to new Gson()
   set {_json} to {_gson}.fromJson({_response}, JsonObject.class)

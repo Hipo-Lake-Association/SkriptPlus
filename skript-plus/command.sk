@@ -1,0 +1,45 @@
+options:
+  # don't touch thanks
+  skp.ver: 1.0.0
+
+# override the /sk command
+on command:
+  if command is "sk" or "skript":
+    cancel event
+    make sender execute command "skp %arguments%"
+
+command /skp [<string>]:
+  trigger:
+    if arg-1 isn't set:
+      skp_send_help_message(sender)
+    else if arg-1 is "reload":
+      stop
+    else if arg-1 is "info":
+      skp_info_message(sender)
+function skp_send_help_message(p: object):
+  send "welcome to skript+" to {_p}
+
+function skp_info_message(p: object):
+  send "Please wait..." to {_p}
+  skp get the latest version of "skript" and store it in {_skript.ver}
+  skp get the latest version of "skript-plus" and store it in {_skp.ver}
+  skp check the updates for all addons and store it in {_addons::*}
+  set {_dependencies::*} to skp_get_skript_dependencies()
+  
+  if {_skript.ver} != skript version:
+    set {_skript.ver} to "&c%skript version% &7-> &a%{_skript.ver}%"
+  else:
+    set {_skript.ver} to "&a%{_skript.ver}%"
+    
+  if {_skp.ver} != "{@skp.ver}":
+    set {_skp.ver} to "&c{@skp.ver} &7-> &a%{_skp.ver}%"
+  else:
+    set {_skp.ver} to "&a{@skp.ver}"
+
+  send "&7--------[ &6Skript&e+ &fInfo &7]--------" to {_p}
+  send "Skript Version: %{_skript.ver}%" to {_p}
+  send "Skript+ Version: %{_skp.ver}%" to {_p}
+  send "" to {_p}
+  send {_addons::*} to {_p}
+  
+  

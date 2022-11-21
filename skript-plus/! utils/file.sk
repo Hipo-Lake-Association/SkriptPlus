@@ -3,9 +3,9 @@ import:
   java.io.FileInputStream
   java.util.Properties
   
-function getAddonProperties() :: object:
+function skp_get_addon_properties() :: object:
   set {_prop} to new Properties() 
-  set {_addon.list} to new File("/home/container/plugins/Skript/scripts/skript-plus/addon.properties")
+  set {_addon.list} to new File("./plugins/Skript/scripts/skript-plus/addon.properties")
   set {_stream} to new FileInputStream({_addon.list})
   {_prop}.load({_stream})
   return {_prop}

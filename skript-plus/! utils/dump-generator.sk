@@ -4,22 +4,22 @@ import:
   io.papermc.paper.datapack.Datapack$Compatibility
   java.lang.Runtime
 
-function genDump() :: string:
+function skp_gen_dump() :: string:
   set {_pm} to Bukkit.getPluginManager()
 
-  loop getSkriptAddons():
+  loop skp_get_skript_addons():
     set {_pl} to loop-value
     set {_ver} to {_pm}.getPlugin({_pl}).getDescription().getVersion()
     add "🞄 %loop-value% (%{_ver}%)" to {_addons::*}
     
-  loop getSkriptDependencies():
+  loop skp_get_skript_dependencies():
     set {_pl} to loop-value
     set {_ver} to {_pm}.getPlugin({_pl}).getDescription().getVersion()
     add "🞄 %loop-value% (%{_ver}%)" to {_dependencies::*}
   
   loop ...{_pm}.getPlugins():
     set {_pl} to loop-value
-    if (getSkriptAddons(), getSkriptDependencies(), "Skript") doesn't contain {_pl}.getName():
+    if (skp_get_skript_addons(), skp_get_skript_dependencies(), "Skript") doesn't contain {_pl}.getName():
       set {_ver} to {_pl}.getDescription().getVersion()
       add "🞄 %{_pl}.getName()% (%{_ver}%)" to {_plugins::*}
   
