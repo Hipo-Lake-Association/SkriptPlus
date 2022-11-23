@@ -4,16 +4,30 @@ import:
 
 function skp_get_latest_version_from_response(response: string, site: string) :: string:
   if {_site} = "github": # response.tag_name
-    set {_gson} to new Gson()
-    set {_json} to {_gson}.fromJson({_response}, JsonObject.class)
+    set {_json} to skp_new_json({_response})
     set {_ver} to {_json}.get("tag_name").getAsString()
-  
   set {_ver} to (join (regex split {_ver} at "[^0-9.]") with "") # gets rid of stuff like "v" in version name, we don't want that
   return {_ver}
 
 function skp_get_log_link_from_response(response: string) :: string:
   # response.url
-  set {_gson} to new Gson()
-  set {_json} to {_gson}.fromJson({_response}, JsonObject.class)
+  set {_json} to skp_new_json({_response})
   set {_link} to {_json}.get("url").getAsString()
   return {_link}
+
+function skp_get_file_name_from_response(response: string) :: string:
+  # response.assets[0].name
+  set {_json} to skp_new_json({_response})
+  set {_name} to {_json}.get("assets").get(0).get("name").getAsString()
+  return {_name}
+
+function skp_get_download_link_from_response(response: string) :: string:
+  # response.assets[0].browser_download_url
+  set {_json} to skp_new_json({_response})
+  set {_name} to {_json}.get("assets").get(0).get("browser_download_url").getAsString()
+  return {_name}
+
+function skp_new_json(response: string) :: object:
+  set {_gson} to new Gson()
+  set {_json} to {_gson}.fromJson({_response}, JsonObject.class)
+  return {_json}

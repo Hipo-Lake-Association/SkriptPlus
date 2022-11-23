@@ -8,9 +8,12 @@ function skp_get_skript_addons() :: strings:
     add loop-value.getName() to {_addons::*}
   return {_addons::*}
 
-function skp_get_skript_dependencies() :: strings:
-  set {_pm} to Bukkit.getPluginManager()
-  loop ...{_pm}.getPlugin("Skript").getDescription().getSoftDepend():
+function skp_get_skript_dependencies(enabled: boolean = false) :: strings:
+  set {_depends::*} to ...Bukkit.getPluginManager().getPlugin("Skript").getDescription().getSoftDepend()
+  if {_enabled} = false:
+    return {_depends::*}
+    
+  loop {_depends::*}:
     set {_pl} to loop-value
     if plugin {_pl} is enabled:
       add loop-value to {_dependencies::*}

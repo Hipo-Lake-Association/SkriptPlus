@@ -12,7 +12,7 @@ function skp_gen_dump() :: string:
     set {_ver} to {_pm}.getPlugin({_pl}).getDescription().getVersion()
     add "🞄 %loop-value% (%{_ver}%)" to {_addons::*}
     
-  loop skp_get_skript_dependencies():
+  loop skp_get_skript_dependencies(true):
     set {_pl} to loop-value
     set {_ver} to {_pm}.getPlugin({_pl}).getDescription().getVersion()
     add "🞄 %loop-value% (%{_ver}%)" to {_dependencies::*}

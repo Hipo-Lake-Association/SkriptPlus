@@ -8,23 +8,65 @@ on command:
     cancel event
     make sender execute command "skp %arguments%"
 
-command /skp [<string>]:
+command /skp [<string>] [<string>] [<string>]:
   trigger:
     if arg-1 isn't set:
       skp_send_help_message(sender)
+      
     else if arg-1 is "reload":
+      if arg-2 isn't set:
+        send "&cPlease define what to reload." to sender
+        stop
       stop
+    
+    else if arg-1 is "enable":
+      if arg-2 isn't set:
+        send "&cPlease define what to enable." to sender
+        stop
+      stop
+       
+    else if arg-1 is "disable":
+      if arg-2 isn't set:
+        send "&cPlease define what to disable." to sender
+        stop
+      stop
+    
     else if arg-1 is "info":
-      skp_info_message(sender)
+      skp_send_info_message(sender)
+    
+    else if arg-1 is "addon":
+      if arg-2 is "delete":
+        if arg-3 isn't set:
+          send "&cPlease define the addon you want to delete." to sender
+          stop
+        stop
+      else if arg-2 is "download":
+        if arg-3 isn't set:
+          send "&cPlease define the addon name or download link." to sender
+          stop
+        stop
+        
+    else if arg-1 is "analyse":
+      if arg-2 isn't set:
+        send "&cPlease define the script you want to analyse." to sender
+        stop
+      stop
+      
+    else if arg-1 is "dump":
+      skp_send_dump_link(sender)
+    
+    else:
+      send "&cUnknown command." to sender
+      
 function skp_send_help_message(p: object):
   send "welcome to skript+" to {_p}
 
-function skp_info_message(p: object):
+function skp_send_info_message(p: object):
   send "Please wait..." to {_p}
   skp get the latest version of "skript" and store it in {_skript.ver}
   skp get the latest version of "skript-plus" and store it in {_skp.ver}
   skp check the updates for all addons and store it in {_addons::*}
-  set {_dependencies::*} to skp_get_skript_dependencies()
+  skp check the updates for all dependencies and store it in {_dependencies::*}
   
   if {_skript.ver} != skript version:
     set {_skript.ver} to "&c%skript version% &7-> &a%{_skript.ver}%"
@@ -35,11 +77,18 @@ function skp_info_message(p: object):
     set {_skp.ver} to "&c{@skp.ver} &7-> &a%{_skp.ver}%"
   else:
     set {_skp.ver} to "&a{@skp.ver}"
-
+       
   send "&7--------[ &6Skript&e+ &fInfo &7]--------" to {_p}
   send "Skript Version: %{_skript.ver}%" to {_p}
   send "Skript+ Version: %{_skp.ver}%" to {_p}
-  send "" to {_p}
-  send {_addons::*} to {_p}
+  send "" and {_addons::*} to {_p}
+  send "" and {_dependencies::*} to {_p}
+
+function skp_send_dump_link(p: object):
+  set {_dump} to skp_gen_dump()
+  skp send a "POST" request to "https://api.mclo.gs/1/log" with data "content=%{_dump}%" and store it in {_response}
+  set {_link} to skp_get_log_link_from_response({_response})
+  send "&aDump generated! %{_link}%" to {_p}
+      
   
   

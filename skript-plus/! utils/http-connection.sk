@@ -13,12 +13,11 @@ import:
   java.nio.charset.StandardCharsets
   java.util.HashMap
 
-effect skp download file %string% and store it inside %string%:
+effect skp download file from %string% and store it inside %string%:
   trigger:
-    broadcast "started!"
-    create section with arguments variables {_link} stored in {_section}:
+    create section with arguments variables {_link}, {_file} stored in {_section}:
       set {_url} to new URL({_link})
-      set {_file} to new File("./plugins/skbee_test.jar")
+      set {_file} to new File({_file})
 
       # create the path if it doesn't exist for some reason
       {_file}.getParentFile().mkdirs()
@@ -30,8 +29,7 @@ effect skp download file %string% and store it inside %string%:
       set {_fileChannel} to {_fileOutputStream}.getChannel()
       {_fileChannel}.transferFrom({_readableByteChannel}, 0, Long.MAX_VALUE)
 
-    run section {_section} async with arguments "https://github.com/ShaneBeee/SkBee/releases/download/2.5.1/SkBee-2.5.1.jar" and wait
-    broadcast "done!"
+    run section {_section} async with arguments expr-1, expr-2 and wait
 
 effect skp send a %string% request to %string% [with data %-string%] and store it in %~object%:
   parse:
