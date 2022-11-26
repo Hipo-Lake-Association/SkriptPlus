@@ -66,7 +66,7 @@ command /skp [<string>] [<string>] [<string>]:
         skp send a "GET" request to "https://api.github.com/repos/%{_repo}%/releases/latest" and store it in {_response}
         set {_file.name} to skp_get_file_name_from_response({_response})
         set {_download.link} to skp_get_download_link_from_response({_response})
-        skp download file from {_response} and store it inside "./plugins/%{_file.name}%"
+        skp download file from {_download.link} and store it inside "./plugins/%{_file.name}%"
         send "{@skp} &fDownloaded addon &e%arg-3%&f. Please restart your server." to sender
     
     # delayed until further notice :/    
