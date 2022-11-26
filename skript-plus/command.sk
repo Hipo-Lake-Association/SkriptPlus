@@ -1,7 +1,10 @@
 options:
   # don't touch thanks
+  skp: &f[&6Skript&e+&f]  
   skp.ver: 1.0.0
 
+import:
+  java.io.File
 # override the /sk command
 on command:
   if command is "sk" or "skript":
@@ -15,21 +18,26 @@ command /skp [<string>] [<string>] [<string>]:
       
     else if arg-1 is "reload":
       if arg-2 isn't set:
-        send "&cPlease define what to reload." to sender
+        send "{@skp} &fPlease define what to reload." to sender
         stop
       stop
     
     else if arg-1 is "enable":
       if arg-2 isn't set:
-        send "&cPlease define what to enable." to sender
+        send "{@skp} &fPlease define what to enable." to sender
         stop
       stop
        
     else if arg-1 is "disable":
       if arg-2 isn't set:
-        send "&cPlease define what to disable." to sender
+        send "{@skp} &fPlease define what to disable." to sender
         stop
-      stop
+      else if script arg-1 isn't loaded:
+        send "{@skp} &fScript is already disabled or doesn't exist." to sender
+        stop
+        
+      disable script "%arg-1%.sk"
+      send "{@skp} &fDisabled &e%arg-1%.sk&f." to sender
     
     else if arg-1 is "info":
       skp_send_info_message(sender)
@@ -39,18 +47,34 @@ command /skp [<string>] [<string>] [<string>]:
         if arg-3 isn't set:
           send "&cPlease define the addon you want to delete." to sender
           stop
-        stop
+        else if plugin arg-3 isn't enabled:
+          send "{@skp} &fAddon not found." to sender
+          stop
+        set {_file} to skp_get_file_of_plugin(arg-3)
+        {_file}.delete()
+        send "{@skp} &fDeleted &e%arg-3%&f. Please restart your server." to sender
+
       else if arg-2 is "download":
         if arg-3 isn't set:
-          send "&cPlease define the addon name or download link." to sender
+          send "&cPlease define the addon name." to sender
           stop
-        stop
-        
-    else if arg-1 is "analyse":
-      if arg-2 isn't set:
-        send "&cPlease define the script you want to analyse." to sender
-        stop
-      stop
+        set {_properties} to skp_get_addon_properties()
+        set {_repo} to try {_properties}.getProperty((lowercase arg-3))
+        if {_repo} isn't set:
+          send "{@skp} &fCouldn't find that addon in &eaddon.properties&f file." to sender
+          stop
+        skp send a "GET" request to "https://api.github.com/repos/%{_repo}%/releases/latest" and store it in {_response}
+        set {_file.name} to skp_get_file_name_from_response({_response})
+        set {_download.link} to skp_get_download_link_from_response({_response})
+        skp download file from {_response} and store it inside "./plugins/%{_file.name}%"
+        send "{@skp} &fDownloaded addon &e%arg-3%&f. Please restart your server." to sender
+    
+    # delayed until further notice :/    
+    #else if arg-1 is "analyse":
+    #  if arg-2 isn't set:
+    #    send "&cPlease define the script you want to analyse." to sender
+    #    stop
+    #  stop
       
     else if arg-1 is "dump":
       skp_send_dump_link(sender)
@@ -89,6 +113,4 @@ function skp_send_dump_link(p: object):
   skp send a "POST" request to "https://api.mclo.gs/1/log" with data "content=%{_dump}%" and store it in {_response}
   set {_link} to skp_get_log_link_from_response({_response})
   send "&aDump generated! %{_link}%" to {_p}
-      
-  
   

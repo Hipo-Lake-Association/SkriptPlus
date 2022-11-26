@@ -1,7 +1,10 @@
 import:
   java.io.File
   java.io.FileInputStream
+  java.lang.reflect.Method
   java.util.Properties
+  org.bukkit.Bukkit
+  org.bukkit.plugin.java.JavaPlugin
   
 function skp_get_addon_properties() :: object:
   set {_prop} to new Properties() 
@@ -9,3 +12,10 @@ function skp_get_addon_properties() :: object:
   set {_stream} to new FileInputStream({_addon.list})
   {_prop}.load({_stream})
   return {_prop}
+
+function skp_get_file_of_plugin(pl: string) :: object:
+  set {_pl} to Bukkit.getPluginManager().getPlugin({_pl})
+  set {_method} to (JavaPlugin.class).getDeclaredMethod("getFile")
+  {_method}.setAccessible(true)
+  set {_file} to {_method}.invoke({_pl})
+  return {_file}
