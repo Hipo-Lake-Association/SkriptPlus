@@ -2,6 +2,14 @@ import:
   ch.njol.skript.Skript
   org.bukkit.Bukkit
   org.bukkit.plugin.PluginDescriptionFile
+  ch.njol.skript.lang.parser.ParserInstance
+  ch.njol.skript.lang.Statement
+
+function skp_get_parse_time(statement: string) :: number:
+  set {_start} to unix timestamp of now
+  set {_parse} to Statement.parse({_statement}, null)
+  set {_finalTime} to (unix timestamp of now) - {_start}
+  return {_finalTime} * 1000
 
 function skp_get_skript_addons() :: strings:
   loop ...Skript.getAddons():
