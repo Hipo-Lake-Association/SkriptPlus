@@ -5,6 +5,10 @@ options:
 
 import:
   java.io.File
+  java.util.Scanner
+  java.io.FileInputStream
+
+
 # override the /sk command
 on command:
   if command is "sk" or "skript":
@@ -69,12 +73,24 @@ command /skp [<string>] [<string>] [<string>]:
         skp download file from {_download.link} and store it inside "./plugins/%{_file.name}%"
         send "{@skp} &fDownloaded addon &e%arg-3%&f. Please restart your server." to sender
     
-    # delayed until further notice :/    
-    #else if arg-1 is "analyse":
-    #  if arg-2 isn't set:
-    #    send "&cPlease define the script you want to analyse." to sender
-    #    stop
-    #  stop
+  
+    else if arg-1 is "analyse":
+      if arg-2 isn't set:
+        send "{@skp} &fPlease define the script you want to analyse." to sender
+        stop
+      set {_fis} to new FileInputStream("./plugins/Skript/scripts/%arg-2%.sk")
+      if {_fis} isn't set:
+        send "{@skp} &fFile not found." to sender
+      set {_scanner} to new Scanner({_fis})
+      set {_result} to "! Warning !%nl%Parsing times may be inaccurate because Skript wasn't made to parse code line by line!%nl%Only use these parsing times as an estimate.%nl%Analysed by SkriptPlus%nl%%nl%"
+      while {_scanner}.hasNextLine():
+        set {_line} to {_scanner}.nextLine()
+        {_line} doesn't match "[\s]+##"
+        set {_time} to skp_get_parse_time({_line})
+        set {_result} to "%{_result}%(%{_time}%ms) %{_line}% %nl%"
+      skp send a "POST" request to "https://api.mclo.gs/1/log" with data "content=%{_result}%" and store it in {_response}
+      set {_link} to skp_get_log_link_from_response({_response})
+      send "{@skp} Analysed %arg-2%! %{_link}%" to sender
       
     else if arg-1 is "dump":
       skp_send_dump_link(sender)
