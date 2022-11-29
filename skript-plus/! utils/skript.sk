@@ -5,6 +5,7 @@ import:
   ch.njol.skript.lang.parser.ParserInstance
   ch.njol.skript.lang.Statement
 
+# thanks wrex very cool
 function skp_get_parse_time(statement: string) :: number:
   set {_start} to unix timestamp of now
   set {_parse} to Statement.parse({_statement}, null)

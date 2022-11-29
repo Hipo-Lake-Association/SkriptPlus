@@ -11,6 +11,7 @@ function skp_get_addon_properties() :: object:
   set {_addon.list} to new File("./plugins/Skript/scripts/skript-plus/addon.properties")
   set {_stream} to new FileInputStream({_addon.list})
   {_prop}.load({_stream})
+  {_stream}.close()
   return {_prop}
 
 function skp_get_file_of_plugin(pl: string) :: object:
