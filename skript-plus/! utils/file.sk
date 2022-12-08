@@ -5,6 +5,8 @@ import:
   java.util.Properties
   org.bukkit.Bukkit
   org.bukkit.plugin.java.JavaPlugin
+  java.nio.file.Files
+  java.nio.file.Paths
   
 function skp_get_addon_properties() :: object:
   set {_prop} to new Properties() 
@@ -20,3 +22,6 @@ function skp_get_file_of_plugin(pl: string) :: object:
   {_method}.setAccessible(true)
   set {_file} to {_method}.invoke({_pl})
   return {_file}
+
+function skp_map_file_to_list(path: string) :: strings:
+  return ...Files.readAllLines(Paths.get({_path}))
