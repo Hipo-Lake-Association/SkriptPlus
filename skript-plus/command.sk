@@ -2,6 +2,8 @@ options:
   # don't touch thanks
   skp: &f[&6Skript&e+&f]  
   skp.ver: 1.0.0
+  # regex used to split error messages
+  regex: \s(?=\(.+(\.sk), )
 
 import:
   java.io.File
@@ -12,12 +14,9 @@ import:
   ch.njol.util.OpenCloseable
   ch.njol.skript.aliases.Aliases
   ch.njol.skript.SkriptConfig
-  ch.njol.skript.ScriptLoader
   ch.njol.skript.Skript
-  java.util.Arrays
-  ch.njol.skript.config.Config
-  ch.njol.skript.config.Node
   org.bukkit.Bukkit
+  java.util.logging.Level
 
 # override the /sk command
 on command:
@@ -143,22 +142,42 @@ function skp_send_dump_link(p: object):
 function skp_parse_script(p: object, s: string):
   set {_log.handler} to new RetainingLogHandler().start()
   set {_timing.log.handler} to new TimingLogHandler().start()
-       
-  if {_s} = "all":
+  
+  if {_s} = "all" or "scripts":
+    set {_scripts::*} to (alphabetically sorted skp_get_enabled_scripts())
+    broadcast "%{_scripts::*}%"
+  if {_s} = "all" or "config":
     SkriptConfig.load()
+  if {_s} = "all" or "aliases":
     Aliases.clear()
     Aliases.load()
-    loop (all enabled scripts):
-      loop-value doesn't contain "skript-plus"
-      disable script loop-value
-    create new section and store it in {_section}:
-      set {_open.closeable} to OpenCloseable.combine({_log.handler}, {_timing.log.handler})
-      loop (all scripts):
-        enable script loop-value
-        #set {_script} to new File(loop-value)
-        #set {_configs} to ScriptLoader.loadStructures({_script})
-        #ScriptLoader.loadScripts({_configs}, {_open.closeable})
-    run section {_section} sync and wait
-    broadcast "&eParsed in &6%{_timing.log.handler}.getTimeTaken()%ms &e:D"
-    broadcast "&cErrors: %{_log.handler}.getNumErrors()%"
-    broadcast "&6Errors:%nl% %...{_log.handler}.getErrors()%"
+  else if {_s} != "all", "aliases", "scripts" or "config":
+    set {_scripts::*} to {_s}
+  loop {_scripts::*}:
+    disable script loop-value     
+        
+  create new section and store it in {_section}:
+    set {_open.closeable} to OpenCloseable.combine({_log.handler}, {_timing.log.handler})
+    loop {_scripts::*}:
+      enable script loop-value
+  run section {_section} sync and wait
+  
+  loop ...{_log.handler}.getErrors():
+    set {_color} to "&e"
+    if loop-value.getLevel() = Level.SEVERE:
+      set {_color} to "&c"
+          
+    set {_message::*} to (regex loop-value.toString() split at "{@regex}")
+    set {_file.name} to (1st element of ((2nd element of ({_message::2} split at "(")) split at ", "))
+    set {_line.num} to (1st element of ((2nd element of ({_message::2} split at "line ")) split at ":")) parsed as number
+    set {_message::1} to (join {_color} and {_message::1})
+    set {_message::2} to (join "&7" and {_message::2})
+
+    set {_lines::*} to skp_map_file_to_list("./plugins/Skript/scripts/%{_file.name}%")
+    set {_message::1.1} to "&7[%{_line.num} - 1%] &f%{_lines::%{_line.num} - 1%} ? ""%"
+    set {_message::1.2} to "&7[%{_line.num}%] <##fa8c8c>%{_lines::%{_line.num}%} ? ""%"
+    set {_message::1.3} to "&7[%{_line.num} + 1%] &f%{_lines::%{_line.num} + 1%} ? ""%"     
+         
+    send formatted {_message::*} to {_p}
+ 
+  send "{@skp} &fParsed in &e%{_timing.log.handler}.getTimeTaken()%ms &fwith &e%{_log.handler}.getNumErrors()% error(s)&f." to {_p}

@@ -27,3 +27,12 @@ function skp_get_skript_dependencies(enabled: boolean = false) :: strings:
     if plugin {_pl} is enabled:
       add loop-value to {_dependencies::*}
   return {_dependencies::*}
+
+# all enabled scripts expr in 2.6.4 is broken
+function skp_get_enabled_scripts() :: strings:
+  loop all scripts:
+    loop-value doesn't contain "/-"
+    loop-value doesn't start with "-"
+    loop-value doesn't contain "skript-plus"
+    add loop-value to {_scripts::*}
+  return {_scripts::*}
