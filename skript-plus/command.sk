@@ -77,8 +77,8 @@ command /skp [<string>] [<string>] [<string>]:
           send "{@skp} &fCouldn't find that addon in &eaddon.properties&f file." to sender
           stop
         skp send a "GET" request to "https://api.github.com/repos/%{_repo}%/releases/latest" and store it in {_response}
-        set {_file.name} to skp_get_file_name_from_response({_response})
-        set {_download.link} to skp_get_download_link_from_response({_response})
+        set {_file.name} to skp_read_response({_response}, "github_file_name")
+        set {_download.link} to skp_read_response({_response}, "github_download_link")
         skp download file from {_download.link} and store it inside "./plugins/%{_file.name}%"
         send "{@skp} &fDownloaded addon &e%arg-3%&f. Please restart your server." to sender
     
@@ -98,7 +98,7 @@ command /skp [<string>] [<string>] [<string>]:
         set {_time} to skp_get_parse_time({_line})
         set {_result} to "%{_result}%(%{_time}%ms) %{_line}% %nl%"
       skp send a "POST" request to "https://api.mclo.gs/1/log" with data "content=%{_result}%" and store it in {_response}
-      set {_link} to skp_get_log_link_from_response({_response})
+      set {_link} to skp_read_response({_response}, "log_link")
       send "{@skp} Analysed %arg-2%! %{_link}%" to sender
       
     else if arg-1 is "dump":
@@ -136,9 +136,13 @@ function skp_send_info_message(p: object):
 function skp_send_dump_link(p: object):
   set {_dump} to skp_gen_dump()
   skp send a "POST" request to "https://api.mclo.gs/1/log" with data "content=%{_dump}%" and store it in {_response}
-  set {_link} to skp_get_log_link_from_response({_response})
+  set {_link} to skp_read_response({_response}, "log_link")
   send "&aDump generated! %{_link}%" to {_p}
 
+               
+# TODO
+# somehow fix it not working with scripts/folders that have spaces in them
+# if you reload a directory, it wont loop through other directories inside the directory
 function skp_parse_script(p: object, s: string):
   set {_log.handler} to new RetainingLogHandler().start()
   set {_timing.log.handler} to new TimingLogHandler().start()
@@ -146,15 +150,25 @@ function skp_parse_script(p: object, s: string):
   if {_s} = "all" or "scripts":
     set {_scripts::*} to (alphabetically sorted skp_get_enabled_scripts())
     broadcast "%{_scripts::*}%"
+         
   if {_s} = "all" or "config":
     SkriptConfig.load()
+         
   if {_s} = "all" or "aliases":
     Aliases.clear()
     Aliases.load()
+         
   else if {_s} != "all", "aliases", "scripts" or "config":
-    set {_scripts::*} to {_s}
+    if {_s} ends with "/":
+      set {_dir} to new File("./plugins/Skript/scripts/%{_s}%")
+      set {_files::*} to ...{_dir}.listFiles()
+      loop {_files::*}:
+        add loop-value.getName() to {_scripts::*}
+    else:
+      set {_scripts::*} to {_s}
+         
   loop {_scripts::*}:
-    disable script loop-value     
+    disable script loop-value
         
   create new section and store it in {_section}:
     set {_open.closeable} to OpenCloseable.combine({_log.handler}, {_timing.log.handler})
@@ -162,22 +176,23 @@ function skp_parse_script(p: object, s: string):
       enable script loop-value
   run section {_section} sync and wait
   
-  loop ...{_log.handler}.getErrors():
-    set {_color} to "&e"
-    if loop-value.getLevel() = Level.SEVERE:
-      set {_color} to "&c"
+  if {_log.handler}.getNumErrors() > 0:
+    loop ...{_log.handler}.getErrors():
+      set {_color} to "&e"
+      if loop-value.getLevel() = Level.SEVERE:
+        set {_color} to "&c"
           
-    set {_message::*} to (regex loop-value.toString() split at "{@regex}")
-    set {_file.name} to (1st element of ((2nd element of ({_message::2} split at "(")) split at ", "))
-    set {_line.num} to (1st element of ((2nd element of ({_message::2} split at "line ")) split at ":")) parsed as number
-    set {_message::1} to (join {_color} and {_message::1})
-    set {_message::2} to (join "&7" and {_message::2})
+      set {_message::*} to (regex loop-value.toString() split at "{@regex}")
+      set {_file.name} to (1st element of ((2nd element of ({_message::2} split at "(")) split at ", "))
+      set {_line.num} to (1st element of ((2nd element of ({_message::2} split at "line ")) split at ":")) parsed as number
+      set {_message::1} to (join {_color} and {_message::1})
+      set {_message::2} to (join "&7" and {_message::2})
 
-    set {_lines::*} to skp_map_file_to_list("./plugins/Skript/scripts/%{_file.name}%")
-    set {_message::1.1} to "&7[%{_line.num} - 1%] &f%{_lines::%{_line.num} - 1%} ? ""%"
-    set {_message::1.2} to "&7[%{_line.num}%] <##fa8c8c>%{_lines::%{_line.num}%} ? ""%"
-    set {_message::1.3} to "&7[%{_line.num} + 1%] &f%{_lines::%{_line.num} + 1%} ? ""%"     
+      set {_lines::*} to skp_map_file_to_list("./plugins/Skript/scripts/%{_file.name}%")
+      set {_message::1.1} to "&7[%{_line.num} - 1%] &f%{_lines::%{_line.num} - 1%} ? ""%"
+      set {_message::1.2} to "&7[%{_line.num}%] <##fa8c8c>%{_lines::%{_line.num}%} ? ""%"
+      set {_message::1.3} to "&7[%{_line.num} + 1%] &f%{_lines::%{_line.num} + 1%} ? ""%"     
          
-    send formatted {_message::*} to {_p}
+      send formatted {_message::*} to {_p}
  
   send "{@skp} &fParsed in &e%{_timing.log.handler}.getTimeTaken()%ms &fwith &e%{_log.handler}.getNumErrors()% error(s)&f." to {_p}

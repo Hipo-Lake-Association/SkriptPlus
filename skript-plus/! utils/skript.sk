@@ -11,7 +11,7 @@ function skp_get_parse_time(statement: string) :: number:
   set {_parse} to Statement.parse({_statement}, null)
   set {_finalTime} to (unix timestamp of now) - {_start}
   return {_finalTime} * 1000
-
+  
 function skp_get_skript_addons() :: strings:
   loop ...Skript.getAddons():
     add loop-value.getName() to {_addons::*}
@@ -25,7 +25,7 @@ function skp_get_skript_dependencies(enabled: boolean = false) :: strings:
   loop {_depends::*}:
     set {_pl} to loop-value
     if plugin {_pl} is enabled:
-      add loop-value to {_dependencies::*}
+      add {_pl} to {_dependencies::*}
   return {_dependencies::*}
 
 # all enabled scripts expr in 2.6.4 is broken

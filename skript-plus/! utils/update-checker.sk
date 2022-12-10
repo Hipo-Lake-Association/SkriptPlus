@@ -16,7 +16,7 @@ effect skp get the latest version of %string% and store it in %~object%:
     skp send a "GET" request to "https://api.github.com/repos/%{_repo}%/releases/latest" and store it in {_response}
 
     # read the response
-    set {_ver} to skp_get_latest_version_from_response({_response}, "github")
+    set {_ver} to skp_read_response({_response}, "github_version")
     set raw expr-2 to {_ver}
     continue
 
