@@ -21,7 +21,7 @@ import:
 # override the /sk command
 on command:
   if command is "sk" or "skript":
-    if sender have permission "skript.admin":
+    if sender has permission "skript.admin":
       cancel event
       make sender execute command "skriptplus %arguments if arguments is set, else ""%"
 
