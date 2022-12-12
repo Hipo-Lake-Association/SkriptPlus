@@ -21,36 +21,40 @@ import:
 # override the /sk command
 on command:
   if command is "sk" or "skript":
-    cancel event
-    make sender execute command "skp %arguments%"
+    if sender have permission "skript.admin":
+      cancel event
+      make sender execute command "skriptplus %arguments if arguments is set, else ""%"
 
-command /skp [<string>] [<string>] [<string>]:
+command /skriptplus [<string>] [<string>] [<string>]:
+  aliases: skp
+  permission: skript.admin
   trigger:
-    if arg-1 isn't set:
-      skp_send_help_message(sender)
+    if arg-1 is "reload", "enable" or "disable":
+      # The only workaround for parsing script names with space
+      if arg-3 is set:
+        set {_script} to "%arg-2% %arg-3%"
+      if arg-1 is "reload":
+        if arg-2 isn't set:
+          send "{@skp} &fPlease define what to reload." to sender
+          stop
+        skp_parse_script(sender, ({_script} ? arg-2))
       
-    else if arg-1 is "reload":
-      if arg-2 isn't set:
-        send "{@skp} &fPlease define what to reload." to sender
-        stop
-      skp_parse_script(sender, arg-2)
-    
-    else if arg-1 is "enable":
-      if arg-2 isn't set:
-        send "{@skp} &fPlease define what to enable." to sender
-        stop
-      stop
-       
-    else if arg-1 is "disable":
-      if arg-2 isn't set:
-        send "{@skp} &fPlease define what to disable." to sender
-        stop
-      else if script arg-1 isn't loaded:
-        send "{@skp} &fScript is already disabled or doesn't exist." to sender
+      else if arg-1 is "enable":
+        if arg-2 isn't set:
+          send "{@skp} &fPlease define what to enable." to sender
+          stop
         stop
         
-      disable script "%arg-1%.sk"
-      send "{@skp} &fDisabled &e%arg-1%.sk&f." to sender
+      else if arg-1 is "disable":
+        if arg-2 isn't set:
+          send "{@skp} &fPlease define what to disable." to sender
+          stop
+        else if script arg-1 isn't loaded:
+          send "{@skp} &fScript is already disabled or doesn't exist." to sender
+          stop
+          
+        disable script "%arg-1%.sk"
+        send "{@skp} &fDisabled &e%arg-1%.sk&f." to sender
     
     else if arg-1 is "info":
       skp_send_info_message(sender)
@@ -79,10 +83,10 @@ command /skp [<string>] [<string>] [<string>]:
         skp send a "GET" request to "https://api.github.com/repos/%{_repo}%/releases/latest" and store it in {_response}
         set {_file.name} to skp_read_response({_response}, "github_file_name")
         set {_download.link} to skp_read_response({_response}, "github_download_link")
+        send "{@skp} &fDownloading addon &e%arg-3%&f..." to sender
         skp download file from {_download.link} and store it inside "./plugins/%{_file.name}%"
         send "{@skp} &fDownloaded addon &e%arg-3%&f. Please restart your server." to sender
     
-  
     else if arg-1 is "analyse":
       if arg-2 isn't set:
         send "{@skp} &fPlease define the script you want to analyse." to sender
@@ -90,6 +94,7 @@ command /skp [<string>] [<string>] [<string>]:
       set {_fis} to new FileInputStream("./plugins/Skript/scripts/%arg-2%.sk")
       if {_fis} isn't set:
         send "{@skp} &fFile not found." to sender
+        stop
       set {_scanner} to new Scanner({_fis})
       set {_result} to "! Warning !%nl%Parsing times may be inaccurate because Skript wasn't made to parse code line by line!%nl%Only use these parsing times as an estimate.%nl%Analysed by SkriptPlus%nl%%nl%"
       while {_scanner}.hasNextLine():
@@ -104,14 +109,24 @@ command /skp [<string>] [<string>] [<string>]:
     else if arg-1 is "dump":
       skp_send_dump_link(sender)
     
-    else:
-      send "&cUnknown command." to sender
-      
+    else: # When invalid or no arguments
+      skp_send_help_message(sender)
+
+on tab complete:
+  if event-string starts with "sk", "skp" or "skriptplus":
+    if tab arg-1 is not set:
+      set tab completions of position 1 to "reload", "enable", "disable", "info", "addon", "analyse" or "dump"
+    # /skp (enable|reload) ....
+    else if tab arg-1 = "reload", "enable", "disable" or "analyse":
+      set {_tabs::*} to enabled scripts if tab arg-1 = "reload" or "disable", else skp_get_all_script_files()
+      set tab completions of position 2 to "config" and {_tabs::*}
+
+
 function skp_send_help_message(p: object):
   send "welcome to skript+" to {_p}
 
 function skp_send_info_message(p: object):
-  send "Please wait..." to {_p}
+  send "{@skp} Please wait..." to {_p}
   skp get the latest version of "skript" and store it in {_skript.ver}
   skp get the latest version of "skript-plus" and store it in {_skp.ver}
   skp check the updates for all addons and store it in {_addons::*}
@@ -144,55 +159,82 @@ function skp_send_dump_link(p: object):
 # somehow fix it not working with scripts/folders that have spaces in them
 # if you reload a directory, it wont loop through other directories inside the directory
 function skp_parse_script(p: object, s: string):
-  set {_log.handler} to new RetainingLogHandler().start()
-  set {_timing.log.handler} to new TimingLogHandler().start()
+  if {_s} = "all":
+    set {_start.log.handler} to true
+    set {_reload::aliases} to true
+    set {_reload::config} to true
+    set {_reload::script} to "all"
   
-  if {_s} = "all" or "scripts":
-    set {_scripts::*} to (alphabetically sorted skp_get_enabled_scripts())
-    broadcast "%{_scripts::*}%"
-         
-  if {_s} = "all" or "config":
+  else if {_s} = "aliases":
+    set {_start.log.handler} to true
+    set {_reload::aliases} to true
+
+  else if {_s} = "config":
+    set {_reload::config} to true
+
+  else if {_s} = "scripts":
+    set {_start.log.handler} to true
+    set {_reload::script} to "all"
+  
+  # Finally, for getting specific script
+  else:
+    loop skp_get_all_script_files("file"):
+      if first element of split (last element of split loop-value.getPath() at "plugins\Skript\scripts\") at ".sk" = first element of split {_s} at ".sk":
+        set {_scripts::*} to last element of split loop-value.getPath() at "plugins\Skript\scripts\"
+        set {_reload::script} to "single"
+        stop loop
+
+  # Start of reload
+  if {_start.log.handler} = true:
+    set {_log.handler} to new RetainingLogHandler().start()
+    set {_timing.log.handler} to new TimingLogHandler().start()
+
+  if {_reload::config} = true:
     SkriptConfig.load()
          
-  if {_s} = "all" or "aliases":
+  if {_reload::aliases} = true:
     Aliases.clear()
     Aliases.load()
-         
-  else if {_s} != "all", "aliases", "scripts" or "config":
-    if {_s} ends with "/":
-      set {_dir} to new File("./plugins/Skript/scripts/%{_s}%")
-      set {_files::*} to ...{_dir}.listFiles()
-      loop {_files::*}:
-        add loop-value.getName() to {_scripts::*}
-    else:
-      set {_scripts::*} to {_s}
-         
-  loop {_scripts::*}:
-    disable script loop-value
-        
-  create new section and store it in {_section}:
-    set {_open.closeable} to OpenCloseable.combine({_log.handler}, {_timing.log.handler})
-    loop {_scripts::*}:
-      enable script loop-value
-  run section {_section} sync and wait
   
-  if {_log.handler}.getNumErrors() > 0:
-    loop ...{_log.handler}.getErrors():
-      set {_color} to "&e"
-      if loop-value.getLevel() = Level.SEVERE:
-        set {_color} to "&c"
-          
-      set {_message::*} to (regex loop-value.toString() split at "{@regex}")
-      set {_file.name} to (1st element of ((2nd element of ({_message::2} split at "(")) split at ", "))
-      set {_line.num} to (1st element of ((2nd element of ({_message::2} split at "line ")) split at ":")) parsed as number
-      set {_message::1} to (join {_color} and {_message::1})
-      set {_message::2} to (join "&7" and {_message::2})
+  # else if {_s} != "all", "aliases", "scripts" or "config":
+  #   if {_s} ends with "/":
+  #     set {_dir} to new File("./plugins/Skript/scripts/%{_s}%")
+  #     set {_files::*} to ...{_dir}.listFiles()
+  #     loop {_files::*}:
+  #       add loop-value.getName() to {_scripts::*}
+  #   else:
+  #     set {_scripts::*} to {_s}
 
-      set {_lines::*} to skp_map_file_to_list("./plugins/Skript/scripts/%{_file.name}%")
-      set {_message::1.1} to "&7[%{_line.num} - 1%] &f%{_lines::%{_line.num} - 1%} ? ""%"
-      set {_message::1.2} to "&7[%{_line.num}%] <##fa8c8c>%{_lines::%{_line.num}%} ? ""%"
-      set {_message::1.3} to "&7[%{_line.num} + 1%] &f%{_lines::%{_line.num} + 1%} ? ""%"     
-         
-      send formatted {_message::*} to {_p}
- 
-  send "{@skp} &fParsed in &e%{_timing.log.handler}.getTimeTaken()%ms &fwith &e%{_log.handler}.getNumErrors()% error(s)&f." to {_p}
+  if {_reload::script} is set:
+    if {_reload::script} = "all":
+      set {_scripts::*} to (alphabetically sorted skp_get_enabled_scripts())
+      broadcast "DEBUG enabled scripts: %{_scripts::*}%"
+      loop {_scripts::*}:
+        disable script loop-value
+
+    create new section and store it in {_section}:
+      set {_open.closeable} to OpenCloseable.combine({_log.handler}, {_timing.log.handler})
+      loop {_scripts::*}:
+        enable script loop-value
+    run section {_section} sync and wait
+    
+    if {_log.handler}.getNumErrors() > 0:
+      loop ...{_log.handler}.getErrors():
+        set {_color} to "&e"
+        if loop-value.getLevel() = Level.SEVERE:
+          set {_color} to "&c"
+            
+        set {_message::*} to (regex loop-value.toString() split at "{@regex}")
+        set {_file.name} to (1st element of ((2nd element of ({_message::2} split at "(")) split at ", "))
+        set {_line.num} to (1st element of ((2nd element of ({_message::2} split at "line ")) split at ":")) parsed as number
+        set {_message::1} to (join {_color} and {_message::1})
+        set {_message::2} to (join "&7" and {_message::2})
+
+        set {_lines::*} to skp_map_file_to_list("./plugins/Skript/scripts/%{_file.name}%")
+        set {_message::1.1} to "&7[%{_line.num} - 1%] &f%{_lines::%{_line.num} - 1%} ? ""%"
+        set {_message::1.2} to "&7[%{_line.num}%] <##fa8c8c>%{_lines::%{_line.num}%} ? ""%"
+        set {_message::1.3} to "&7[%{_line.num} + 1%] &f%{_lines::%{_line.num} + 1%} ? ""%"     
+          
+        send formatted {_message::*} to {_p}
+    
+    send "{@skp} &fParsed &e%size of {_scripts::*}% &escript%"" if size of {_scripts::*} = 1, else "s"% &fin &e%{_timing.log.handler}.getTimeTaken()%ms &fwith &e%{_log.handler}.getNumErrors()% error(s)&f." to {_p}
