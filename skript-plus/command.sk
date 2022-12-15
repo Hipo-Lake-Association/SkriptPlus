@@ -1,6 +1,6 @@
 options:
   # don't touch thanks
-  skp: &f[&6Skript&e+&f]  
+  skp: &f[&6Skript&e+&f]&r  
   skp.ver: 1.0.0
   # regex used to split error messages
   regex: \s(?=\(.+(\.sk), )
@@ -123,7 +123,7 @@ on tab complete:
 
 
 function skp_send_help_message(p: object):
-  send "welcome to skript+" to {_p}
+  send "Welcome to {@skp}" to {_p}
 
 function skp_send_info_message(p: object):
   send "{@skp} Please wait..." to {_p}
@@ -142,7 +142,7 @@ function skp_send_info_message(p: object):
   else:
     set {_skp.ver} to "&a{@skp.ver}"
        
-  send "&7--------[ &6Skript&e+ &fInfo &7]--------" to {_p}
+  send "&7--------[ {@skp} &fInfo &7]--------" to {_p}
   send "Skript Version: %{_skript.ver}%" to {_p}
   send "Skript+ Version: %{_skp.ver}%" to {_p}
   send "" and {_addons::*} to {_p}
