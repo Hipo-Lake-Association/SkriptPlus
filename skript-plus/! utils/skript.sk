@@ -39,14 +39,3 @@ function skp_get_enabled_scripts() :: strings:
     loop-value doesn't contain "skript-plus"
     add loop-value to {_scripts::*}
   return {_scripts::*}
-
-# Returns all script files in a directory
-function skp_get_all_script_files(type: string = "string", path: string = "plugins/Skript/scripts") :: objects:
-  set {_directory} to new File({_path})
-  loop ...{_directory}.listFiles():
-    if loop-value.isDirectory():
-      add skp_get_all_script_files({_type}, loop-value.getPath()) to {_scripts::*}
-    else:
-      loop-value.getName() ends with ".sk"
-      add (loop-value if {_type} = "file", else loop-value.getName()) to {_scripts::*}
-  return {_scripts::*}
