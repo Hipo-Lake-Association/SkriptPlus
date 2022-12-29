@@ -132,11 +132,12 @@ function skp_send_help_message(p: object):
   send "welcome to &6skript&e+" to {_p}
   send "&7Usage: &8/&8skript &b..." to {_p}
   send "  &areload &7- Reloads the config, all scripts, everything, or a specific script" to {_p}
-  send "  &aenable &7- Enables all scripts or a specific one" {_p}
-  send "  &adisable &7- Disables all scripts or a specific one" {_p}
-  send "  &aanalyse &7- Quickly analyzes your script, you get the running time of each line and a log file" {_p}
-  send "  &ainfo &7- Prints a message with Installed addons/depedencies" {_p}
-  send "  &ahelp &7- Prints this help message. Use '/skript reload/enable/disable/update' to get more info" {_p}
+  send "  &aenable &7- Enables all scripts or a specific one" to {_p}
+  send "  &adisable &7- Disables all scripts or a specific one" to {_p}
+  send "  &aanalyse &7- Quickly analyzes your script, you get the running time of each line and a log file" to {_p}
+  send "  &aaddon &7- You can use 'download/delete' for manage any addon you have installed related to skript" to {_p}
+  send "  &ainfo &7- Prints a message with Installed addons/depedencies" to {_p}
+  send "  &ahelp &7- Prints this help message. Use '/skript reload/enable/disable/update' to get more info" to {_p}
 
 
 
