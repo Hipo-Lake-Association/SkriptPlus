@@ -104,7 +104,10 @@ command /skriptplus [<string>] [<string>] [<string>]:
       if arg-2 isn't set:
         send "{@skp} &fPlease define the script you want to analyse." to sender
         stop
-      set {_fis} to new FileInputStream("./plugins/Skript/scripts/%arg-2%.sk")
+
+      set {_file} to "./plugins/Skript/scripts/%arg-2%" if arg-2 end with ".sk" else "./plugins/Skript/scripts/%arg-2%.sk"
+      set {_fis} to new FileInputStream({_file})
+
       if {_fis} isn't set:
         send "{@skp} &fFile not found." to sender
         stop
@@ -126,7 +129,17 @@ command /skriptplus [<string>] [<string>] [<string>]:
       skp_send_help_message(sender)
 
 function skp_send_help_message(p: object):
-  send "welcome to skript+" to {_p}
+  send "welcome to &6skript&e+" to {_p}
+  send "&7Usage: &8/&8skript &b..." to {_p}
+  send "  &areload &7- Reloads the config, all scripts, everything, or a specific script" to {_p}
+  send "  &aenable &7- Enables all scripts or a specific one" {_p}
+  send "  &adisable &7- Disables all scripts or a specific one" {_p}
+  send "  &aanalyse &7- Quickly analyzes your script, you get the running time of each line and a log file" {_p}
+  send "  &ainfo &7- Prints a message with Installed addons/depedencies" {_p}
+  send "  &ahelp &7- Prints this help message. Use '/skript reload/enable/disable/update' to get more info" {_p}
+
+
+
 
 function skp_send_info_message(p: object):
   send "{@skp} Please wait..." to {_p}
