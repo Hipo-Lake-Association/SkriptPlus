@@ -19,7 +19,7 @@ function skp_get_addon_properties() :: object:
 function skp_get_file_of_plugin(pl: string) :: object:
   set {_pl} to Bukkit.getPluginManager().getPlugin({_pl})
   set {_method} to (JavaPlugin.class).getDeclaredMethod("getFile")
-  {_method}.setAccessible(true)
+  {_method}.setAccessible(true) # doesn't work without this for some reason, skript-reflect broke?
   set {_file} to {_method}.invoke({_pl})
   return {_file}
 

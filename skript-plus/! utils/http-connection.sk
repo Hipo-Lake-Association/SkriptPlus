@@ -47,7 +47,7 @@ effect skp send a %string% request to %string% [with data %-string%] and store i
       if {_method} = "POST":
         {_con}.setDoOutput(true)
         {_con}.setRequestProperty("Accept", "application/json")
-        {_con}.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
+        {_con}.setRequestProperty("Content-Type", "application/json")
         set {_os} to {_con}.getOutputStream()
         {_os}.write({_data}.getBytes(StandardCharsets.UTF_8))
         {_os}.flush()
