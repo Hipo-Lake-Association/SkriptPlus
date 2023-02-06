@@ -47,20 +47,23 @@ command /skriptplus [<string>] [<string>] [<string>]:
       if arg-2 isn't set:
         send "{@skp} &fPlease define the script." to sender
         stop
-                                           
-      # The only workaround for parsing script names with space
-      if arg-3 is set:
-        set {_script} to "%arg-2% %arg-3%"
+      
+      if arg-2 isn't ("aliases", "scripts", "config" or "all"):
+        # The only workaround for parsing script names with space
+        if arg-3 is set:
+          set {_script} to "%arg-2% %arg-3%"
              
-      # add the .sk suffix if there isn't one
-      set {_script} to skp_fix_file_name({_script} ? arg-2)
+        # add the .sk suffix if there isn't one
+        set {_script} to skp_fix_file_name({_script} ? arg-2)
 
-      # newly created scripts won't work with the "script is disabled" condition 
-      set {_script.file} to new File("./plugins/Skript/scripts/%{_script}%")
-      if {_script.file}.exists() = false:
-        send "{@skp} &fThis script doesn't exist." to sender
-        stop
-          
+        # newly created scripts won't work with the "script is disabled" condition 
+        set {_script.file} to new File("./plugins/Skript/scripts/%{_script}%")
+        if {_script.file}.exists() = false:
+          send "{@skp} &fThis script doesn't exist." to sender
+          stop
+      else:
+        set {_script} to arg-2
+             
       if arg-1 is "reload":
         skp_parse_script(sender, {_script})
       
