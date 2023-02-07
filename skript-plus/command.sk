@@ -176,8 +176,10 @@ function skp_parse_script(p: object, s: string):
     set {_open.closeable} to OpenCloseable.combine({_log.handler}, {_timing.log.handler})
     loop (alphabetically sorted {_scripts::*}):
       reload script loop-value
-  run section {_section} sync and wait
-  
+    set {_ms} to {_timing.log.handler}.getTimeTaken()
+    return {_ms}
+  run section {_section} sync and store the result in {_ms} and wait
+         
   set {_err} to {_log.handler}.getNumErrors()
   if {_err} > 0:
     loop ...{_log.handler}.getErrors():
@@ -204,7 +206,6 @@ function skp_parse_script(p: object, s: string):
   else:
     set {_err} to "%{_err}% errors"
                 
-  set {_ms} to ({_timing.log.handler}.getTimeTaken() - 50) # skript+ is slow :/
   send "{@skp} &fReloaded &e%{_reloaded::*}% &fin &e%{_ms}%ms &fwith &e%{_err}%&f." to {_p}
    
 function skp_fix_file_name(s: string) :: string:
