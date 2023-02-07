@@ -222,12 +222,15 @@ function skp_analyse_script(p: object, script: string):
   if {_file}.exists() = false:
     send "{@skp} &fFile not found." to {_p}
     stop
-  set {_result} to "! Warning !%nl%Parsing times may be inaccurate because Skript wasn't made to parse code line by line!%nl%Only use these parsing times as an estimate.%nl%Analysed by SkriptPlus%nl%%nl%"
-  set {_lines::*} to skp_map_file_to_list("./plugins/Skript/scripts/%{_script}%")
-  loop {_lines::*}:
-    loop-value doesn't contain "##"
-    set {_time} to skp_get_parse_time(loop-value)
-    set {_result} to "%{_result}%(%{_time}%ms) %loop-value% %nl%"
+  create new section with arguments variables {_script} and store it in {_section}:
+    set {_result} to "! Warning !%nl%Parsing times may be inaccurate because Skript wasn't made to parse code line by line!%nl%Only use these parsing times as an estimate.%nl%Analysed by SkriptPlus%nl%%nl%"
+    set {_lines::*} to skp_map_file_to_list("./plugins/Skript/scripts/%{_script}%")
+    loop {_lines::*}:
+      loop-value doesn't contain "##"
+      set {_time} to skp_get_parse_time(loop-value)
+      set {_result} to "%{_result}%(%{_time}%ms) %loop-value% %nl%"
+    return {_result}
+  run section {_section} async and store the result in {_result} and wait
   skp send a "POST" request to "https://api.mclo.gs/1/log" with data "content=%{_result}%" and store it in {_response}
   set {_link} to skp_read_response({_response}, "log_link")
   send formatted "{@skp} Analysed &e%{_script}%&f! View it <link:%{_link}%>&e&nhere&r&f!" to {_p}
