@@ -42,8 +42,8 @@ effect skp check the updates for all (:addons|:dependencies) and store it in %~o
     loop {_plugins::*}:
       # if the plugin is avaliable in the properties file, check for updates
       set {_addon} to lowercase loop-value
+      set {_current} to Bukkit.getPluginManager().getPlugin(loop-value).getDescription().getVersion()
       if {_prop}.getProperty({_addon}) is set:
-        set {_current} to Bukkit.getPluginManager().getPlugin(loop-value).getDescription().getVersion()
         skp get the latest version of loop-value and store it in {_latest}
         if skp_version_is_outdated({_current}, {_latest}) is true: # outdated
           add " &7[&c⬤&7] &f%loop-value% &7(%{_current}% -> %{_latest}%)" to {_send::*}
