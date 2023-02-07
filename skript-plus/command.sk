@@ -37,7 +37,8 @@ on tab complete:
       set tab completions of position 2 to {_tabs::*}
       
     else if tab arg-1 = "addon":
-      set tab completions of position 2 to ("download", "delete", "update")
+      set tab completions of position 2 to ("download", "delete")
+      set tab completions of position 3 to ...(skp_get_addon_properties()).stringPropertyNames()
      
 command /skriptplus [<string>] [<string>] [<string>]:
   aliases: skp
